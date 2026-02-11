@@ -4,5 +4,5 @@
 *.log
 .gocache/
 .gopath/
-rimaupanel
+/rimaupanel
 *.out

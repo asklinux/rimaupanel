@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>RimauPanel - Kernal</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/css/sb-admin-2.min.css" rel="stylesheet">
+</head>
+<body id="page-top">
+  <div id="wrapper">
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/dashboard">
+        <div class="sidebar-brand-icon">
+          <img src="/assets/brand.svg" alt="RimauPanel" style="width: 40px; height: 40px;">
+        </div>
+        <div class="sidebar-brand-text mx-3">RimauPanel</div>
+      </a>
+      <hr class="sidebar-divider my-0">
+
+      <li class="nav-item">
+        <a class="nav-link" href="/dashboard">
+          <i class="fas fa-fw fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/apache">
+          <i class="fas fa-fw fa-feather-alt"></i>
+          <span>Apache</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/nginx">
+          <i class="fas fa-fw fa-stream"></i>
+          <span>Nginx</span>
+        </a>
+      </li>
+      <li class="nav-item active">
+        <a class="nav-link" href="/kernel">
+          <i class="fas fa-fw fa-cogs"></i>
+          <span>Kernal</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/coraza">
+          <i class="fas fa-fw fa-shield-alt"></i>
+          <span>Coraza</span>
+        </a>
+      </li>
+
+      <hr class="sidebar-divider d-none d-md-block">
+    </ul>
+
+    <div id="content-wrapper" class="d-flex flex-column">
+      <div id="content">
+        <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+          <span class="mr-2 d-none d-lg-inline text-gray-600 small">Login sebagai {{.Username}}</span>
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+              <form method="post" action="/language" class="form-inline mr-2">
+                <input type="hidden" name="next" value="{{.CurrentURI}}">
+                <select name="lang" class="form-control form-control-sm" onchange="this.form.submit()">
+                  <option value="ms" {{if eq .Lang "ms"}}selected{{end}}>Bahasa Malaysia</option>
+                  <option value="en" {{if eq .Lang "en"}}selected{{end}}>English</option>
+                </select>
+              </form>
+            </li>
+            <li class="nav-item">
+              <a class="btn btn-sm btn-outline-primary mr-2" href="/change-password"><i class="fas fa-key mr-1"></i>Tukar Kata Laluan</a>
+            </li>
+            <li class="nav-item">
+              <a class="btn btn-sm btn-outline-danger" href="/logout"><i class="fas fa-sign-out-alt mr-1"></i>Logout</a>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="container-fluid">
+          {{if .Notice}}
+          <div class="alert alert-success" role="alert">{{.Notice}}</div>
+          {{end}}
+          {{if .Error}}
+          <div class="alert alert-danger" role="alert">{{.Error}}</div>
+          {{end}}
+
+          <div class="card shadow mb-4">
+            <div class="card-header py-3">
+              <h6 class="m-0 font-weight-bold text-primary">Panel Tuning Kernal</h6>
+            </div>
+            <div class="card-body">
+              <p class="mb-3">Panel ini untuk optimize dan configure kernal Linux tanpa compile semula kernel.</p>
+
+              <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link {{if eq .ActiveTab "optimize"}}active{{end}}" data-toggle="tab" href="#kernel-optimize" role="tab">Optimize Kernal</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link {{if eq .ActiveTab "configure"}}active{{end}}" data-toggle="tab" href="#kernel-configure" role="tab">Configure Kernal</a>
+                </li>
+              </ul>
+
+              <div class="tab-content border border-top-0 p-3">
+                <div class="tab-pane fade {{if eq .ActiveTab "optimize"}}show active{{end}}" id="kernel-optimize" role="tabpanel">
+                  <div class="card border-left-info mb-3">
+                    <div class="card-body">
+                      <h6 class="text-info font-weight-bold">tuned-adm Profile</h6>
+                      {{if .TunedInstalled}}
+                      <p class="mb-2">Status tuned: <span class="badge badge-success">Sudah Dipasang</span></p>
+                      <p class="mb-3">Profil aktif semasa: <strong>{{.TunedActiveProfile}}</strong></p>
+                      <form method="post" action="/kernel/tuned/profile" class="form-inline">
+                        <select class="form-control form-control-sm mr-2 mb-2" name="profile" required>
+                          {{range .TunedProfiles}}
+                          <option value="{{.}}">{{.}}</option>
+                          {{end}}
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm mb-2">Apply Profil</button>
+                      </form>
+                      {{else}}
+                      <p class="mb-2">Status tuned: <span class="badge badge-danger">Belum Dipasang</span></p>
+                      {{if .TunedCanInstall}}
+                      <form method="post" action="/kernel/tuned/install" class="mb-0">
+                        <button type="submit" class="btn btn-warning btn-sm">Pasang tuned</button>
+                      </form>
+                      {{else}}
+                      <p class="mb-0 text-danger">Auto install tuned tidak tersedia untuk distro ini.</p>
+                      {{end}}
+                      {{end}}
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-lg-4 mb-3">
+                      <div class="card h-100 border-left-primary">
+                        <div class="card-body">
+                          <h6 class="font-weight-bold text-primary">Preset Seimbang</h6>
+                          <p class="small mb-3">Tetapan seimbang untuk workload umum server.</p>
+                          <form method="post" action="/kernel/optimize/apply">
+                            <input type="hidden" name="preset" value="balanced">
+                            <button type="submit" class="btn btn-outline-primary btn-sm">Apply Seimbang</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-4 mb-3">
+                      <div class="card h-100 border-left-success">
+                        <div class="card-body">
+                          <h6 class="font-weight-bold text-success">Preset Web Latency Rendah</h6>
+                          <p class="small mb-3">Sesuai untuk web server latency rendah (Apache/Nginx).</p>
+                          <form method="post" action="/kernel/optimize/apply">
+                            <input type="hidden" name="preset" value="web-latency">
+                            <button type="submit" class="btn btn-outline-success btn-sm">Apply Web Latency</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-4 mb-3">
+                      <div class="card h-100 border-left-warning">
+                        <div class="card-body">
+                          <h6 class="font-weight-bold text-warning">Preset Throughput Rangkaian</h6>
+                          <p class="small mb-3">Optimasi network queue dan backlog untuk trafik tinggi.</p>
+                          <form method="post" action="/kernel/optimize/apply">
+                            <input type="hidden" name="preset" value="network-throughput">
+                            <button type="submit" class="btn btn-outline-warning btn-sm">Apply Throughput</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="card border-left-secondary">
+                    <div class="card-body">
+                      <h6 class="font-weight-bold">Cadangan optimasi tanpa compile kernel</h6>
+                      <ul class="mb-0">
+                        {{range .KernelSuggestions}}
+                        <li>{{.}}</li>
+                        {{end}}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="tab-pane fade {{if eq .ActiveTab "configure"}}show active{{end}}" id="kernel-configure" role="tabpanel">
+                  <div class="row">
+                    <div class="col-lg-8">
+                      <form method="post" action="/kernel/configure/save">
+                        <div class="form-row">
+                          <div class="form-group col-md-4">
+                            <label>vm.swappiness</label>
+                            <input type="number" name="swappiness" min="0" max="100" class="form-control" value="{{.KernelConfig.Swappiness}}" required>
+                          </div>
+                          <div class="form-group col-md-4">
+                            <label>vm.dirty_ratio</label>
+                            <input type="number" name="dirty_ratio" min="1" max="90" class="form-control" value="{{.KernelConfig.DirtyRatio}}" required>
+                          </div>
+                          <div class="form-group col-md-4">
+                            <label>vm.dirty_background_ratio</label>
+                            <input type="number" name="dirty_background_ratio" min="1" max="50" class="form-control" value="{{.KernelConfig.DirtyBackground}}" required>
+                          </div>
+                        </div>
+
+                        <div class="form-row">
+                          <div class="form-group col-md-4">
+                            <label>net.core.somaxconn</label>
+                            <input type="number" name="somaxconn" min="128" max="65535" class="form-control" value="{{.KernelConfig.Somaxconn}}" required>
+                          </div>
+                          <div class="form-group col-md-4">
+                            <label>net.ipv4.tcp_max_syn_backlog</label>
+                            <input type="number" name="tcp_max_syn_backlog" min="512" max="262144" class="form-control" value="{{.KernelConfig.TCPMaxSynBacklog}}" required>
+                          </div>
+                          <div class="form-group col-md-4">
+                            <label>kernel.pid_max</label>
+                            <input type="number" name="pid_max" min="32768" max="4194304" class="form-control" value="{{.KernelConfig.PIDMax}}" required>
+                          </div>
+                        </div>
+
+                        <div class="form-row">
+                          <div class="form-group col-md-4">
+                            <label>net.ipv4.tcp_fin_timeout</label>
+                            <input type="number" name="tcp_fin_timeout" min="5" max="180" class="form-control" value="{{.KernelConfig.TCPFinTimeout}}" required>
+                          </div>
+                          <div class="form-group col-md-4">
+                            <label>net.ipv4.tcp_keepalive_time</label>
+                            <input type="number" name="tcp_keepalive_time" min="60" max="7200" class="form-control" value="{{.KernelConfig.TCPKeepaliveTime}}" required>
+                          </div>
+                          <div class="form-group col-md-2">
+                            <label>local_port_start</label>
+                            <input type="number" name="local_port_start" min="1024" max="65534" class="form-control" value="{{.KernelConfig.LocalPortRangeStart}}" required>
+                          </div>
+                          <div class="form-group col-md-2">
+                            <label>local_port_end</label>
+                            <input type="number" name="local_port_end" min="1025" max="65535" class="form-control" value="{{.KernelConfig.LocalPortRangeEnd}}" required>
+                          </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Simpan dan Apply Kernel Config</button>
+                      </form>
+                    </div>
+                    <div class="col-lg-4">
+                      <p class="small mb-1">Fail config:</p>
+                      <p><code>{{.KernelConfigPath}}</code></p>
+                      <p class="small mb-2">Pratonton:</p>
+                      <pre class="bg-light border rounded p-2 small"><code>{{.KernelConfigPreview}}</code></pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="sticky-footer bg-white">
+        <div class="container my-auto">
+          <div class="copyright text-center my-auto small">
+            <div>Copyright © 2026. Developed by Tunnelbiz Studio Sdn Bhd.</div>
+            <div>MIT License</div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/js/sb-admin-2.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>RimauPanel - {{.ServiceName}}</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/css/sb-admin-2.min.css" rel="stylesheet">
+</head>
+<body id="page-top">
+  <div id="wrapper">
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/dashboard">
+        <div class="sidebar-brand-icon">
+          <img src="/assets/brand.svg" alt="RimauPanel" style="width: 40px; height: 40px;">
+        </div>
+        <div class="sidebar-brand-text mx-3">RimauPanel</div>
+      </a>
+      <hr class="sidebar-divider my-0">
+
+      <li class="nav-item">
+        <a class="nav-link" href="/dashboard">
+          <i class="fas fa-fw fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+
+      <li class="nav-item {{if .ActiveApache}}active{{end}}">
+        <a class="nav-link" href="/apache">
+          <i class="fas fa-fw fa-feather-alt"></i>
+          <span>Apache</span>
+        </a>
+      </li>
+
+      <li class="nav-item {{if .ActiveNginx}}active{{end}}">
+        <a class="nav-link" href="/nginx">
+          <i class="fas fa-fw fa-stream"></i>
+          <span>Nginx</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/kernel">
+          <i class="fas fa-fw fa-cogs"></i>
+          <span>Kernal</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link" href="/coraza">
+          <i class="fas fa-fw fa-shield-alt"></i>
+          <span>Coraza</span>
+        </a>
+      </li>
+
+      <hr class="sidebar-divider d-none d-md-block">
+    </ul>
+
+    <div id="content-wrapper" class="d-flex flex-column">
+      <div id="content">
+        <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+          <span class="mr-2 d-none d-lg-inline text-gray-600 small">Login sebagai {{.Username}}</span>
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+              <form method="post" action="/language" class="form-inline mr-2">
+                <input type="hidden" name="next" value="{{.CurrentURI}}">
+                <select name="lang" class="form-control form-control-sm" onchange="this.form.submit()">
+                  <option value="ms" {{if eq .Lang "ms"}}selected{{end}}>Bahasa Malaysia</option>
+                  <option value="en" {{if eq .Lang "en"}}selected{{end}}>English</option>
+                </select>
+              </form>
+            </li>
+            <li class="nav-item">
+              <a class="btn btn-sm btn-outline-primary mr-2" href="/change-password"><i class="fas fa-key mr-1"></i>Tukar Kata Laluan</a>
+            </li>
+            <li class="nav-item">
+              <a class="btn btn-sm btn-outline-danger" href="/logout"><i class="fas fa-sign-out-alt mr-1"></i>Logout</a>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="container-fluid">
+          {{if .Notice}}
+          <div class="alert alert-success" role="alert">{{.Notice}}</div>
+          {{end}}
+          {{if .Error}}
+          <div class="alert alert-danger" role="alert">{{.Error}}</div>
+          {{end}}
+
+          <div class="row">
+            <div class="col-12">
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Configure {{.ServiceName}}</h6>
+                </div>
+                <div class="card-body">
+                  <p>{{.ServiceNotes}}</p>
+                  {{if .Installed}}
+                  <div class="alert {{if .IsRunning}}alert-success{{else}}alert-danger{{end}}" role="alert">
+                    {{.StatusMessage}}
+                  </div>
+                  <p class="small text-muted mb-3">{{.StatusHint}}</p>
+
+                  <div class="mb-3">
+                    <form method="post" action="/service/action" class="d-inline-block mr-2">
+                      <input type="hidden" name="service" value="{{.ServiceKey}}">
+                      <input type="hidden" name="tab" value="{{.ActiveTab}}">
+                      <input type="hidden" name="action" value="start">
+                      <button type="submit" class="btn btn-success btn-sm" {{if not .CanControl}}disabled{{end}}>Start</button>
+                    </form>
+                    <form method="post" action="/service/action" class="d-inline-block mr-2">
+                      <input type="hidden" name="service" value="{{.ServiceKey}}">
+                      <input type="hidden" name="tab" value="{{.ActiveTab}}">
+                      <input type="hidden" name="action" value="restart">
+                      <button type="submit" class="btn btn-primary btn-sm" {{if not .CanControl}}disabled{{end}}>Restart</button>
+                    </form>
+                    <form method="post" action="/service/action" class="d-inline-block mr-2">
+                      <input type="hidden" name="service" value="{{.ServiceKey}}">
+                      <input type="hidden" name="tab" value="{{.ActiveTab}}">
+                      <input type="hidden" name="action" value="reload">
+                      <button type="submit" class="btn btn-info btn-sm" {{if not .CanControl}}disabled{{end}}>Reload</button>
+                    </form>
+                    <form method="post" action="/service/action" class="d-inline-block">
+                      <input type="hidden" name="service" value="{{.ServiceKey}}">
+                      <input type="hidden" name="tab" value="{{.ActiveTab}}">
+                      <input type="hidden" name="action" value="stop">
+                      <button type="submit" class="btn btn-danger btn-sm" {{if not .CanControl}}disabled{{end}}>Stop</button>
+                    </form>
+                    <form method="post" action="/service/action" class="d-inline-block ml-2">
+                      <input type="hidden" name="service" value="{{.ServiceKey}}">
+                      <input type="hidden" name="tab" value="{{.ActiveTab}}">
+                      <input type="hidden" name="action" value="status">
+                      <button type="submit" class="btn btn-secondary btn-sm">Check Status</button>
+                    </form>
+                    <form method="post" action="/service/action" class="d-inline-block ml-2">
+                      <input type="hidden" name="service" value="{{.ServiceKey}}">
+                      <input type="hidden" name="tab" value="{{.ActiveTab}}">
+                      <input type="hidden" name="action" value="enable">
+                      <button type="submit" class="btn btn-outline-success btn-sm" {{if not .CanControl}}disabled{{end}}>Enable</button>
+                    </form>
+                    <form method="post" action="/service/action" class="d-inline-block ml-2">
+                      <input type="hidden" name="service" value="{{.ServiceKey}}">
+                      <input type="hidden" name="tab" value="{{.ActiveTab}}">
+                      <input type="hidden" name="action" value="disable">
+                      <button type="submit" class="btn btn-outline-danger btn-sm" {{if not .CanControl}}disabled{{end}}>Disable</button>
+                    </form>
+                    <form method="post" action="/service/action" class="d-inline-block ml-2">
+                      <input type="hidden" name="service" value="{{.ServiceKey}}">
+                      <input type="hidden" name="tab" value="{{.ActiveTab}}">
+                      <input type="hidden" name="action" value="checkconfig">
+                      <button type="submit" class="btn btn-outline-secondary btn-sm">Check Config</button>
+                    </form>
+                  </div>
+                  {{else}}
+                  <div class="alert alert-warning" role="alert">Server not install</div>
+                  <p class="small text-muted">{{.StatusHint}}</p>
+                    {{if .CanInstall}}
+                    <form method="post" action="/service/install">
+                      <input type="hidden" name="service" value="{{.ServiceKey}}">
+                      <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-download mr-1"></i>Install Now
+                      </button>
+                    </form>
+                    {{else}}
+                    <p class="mb-0 text-danger">Install automatik tidak tersedia untuk distro ini.</p>
+                    {{end}}
+                  {{end}}
+
+                  {{if .ShowTabs}}
+                  <ul class="nav nav-tabs mt-4" id="serviceTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                      <a class="nav-link {{if eq .ActiveTab "setting"}}active{{end}}" id="setting-tab" data-toggle="tab" href="#setting-pane" role="tab">Setting</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                      <a class="nav-link {{if eq .ActiveTab "vhost"}}active{{end}}" id="vhost-tab" data-toggle="tab" href="#vhost-pane" role="tab">Virtual Host</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                      <a class="nav-link {{if eq .ActiveTab "optimize"}}active{{end}}" id="optimize-tab" data-toggle="tab" href="#optimize-pane" role="tab">Optimize</a>
+                    </li>
+                    {{if .ShowWAFTab}}
+                    <li class="nav-item" role="presentation">
+                      <a class="nav-link {{if eq .ActiveTab "waf"}}active{{end}}" id="waf-tab" data-toggle="tab" href="#waf-pane" role="tab">WAF</a>
+                    </li>
+                    {{end}}
+                  </ul>
+
+                  <div class="tab-content border border-top-0 p-3" id="serviceTabsContent">
+                    <div class="tab-pane fade {{if eq .ActiveTab "setting"}}show active{{end}}" id="setting-pane" role="tabpanel">
+                      <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                          <tbody>
+                            <tr>
+                              <th style="width: 220px;">Package Manager</th>
+                              <td>{{.PackageManager}}</td>
+                            </tr>
+                            <tr>
+                              <th>Package</th>
+                              <td>{{.PackageName}}</td>
+                            </tr>
+                            <tr>
+                              <th>Service Unit</th>
+                              <td><code>{{.ServiceUnit}}</code></td>
+                            </tr>
+                            <tr>
+                              <th>Main Config</th>
+                              <td><code>{{.ConfigPath}}</code></td>
+                            </tr>
+                            <tr>
+                              <th>Validate Config</th>
+                              <td><code>{{.TestCommand}}</code></td>
+                            </tr>
+                            <tr>
+                              <th>Reload Service</th>
+                              <td><code>{{.ReloadCommand}}</code></td>
+                            </tr>
+                            <tr>
+                              <th>Default Listen Port</th>
+                              <td>{{.DefaultListenPort}}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="mt-3 p-3 border rounded bg-light">
+                        <h6 class="text-primary font-weight-bold mb-2">Ubah Port Server</h6>
+                        <p class="small text-muted mb-3">Tetapan ini digunakan sebagai port default untuk virtual host baru. Anda boleh terus apply ke semua virtual host sedia ada.</p>
+                        <form method="post" action="/service/setting/port" class="mb-2">
+                          <input type="hidden" name="service" value="{{.ServiceKey}}">
+                          <div class="form-row">
+                            <div class="form-group col-md-3">
+                              <label>Port Server</label>
+                              <input type="number" name="listen_port" min="1" max="65535" value="{{.DefaultListenPort}}" class="form-control" required>
+                            </div>
+                            <div class="form-group col-md-5 d-flex align-items-end">
+                              <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="apply_to_all_vhosts" id="applyAllVhosts" checked>
+                                <label class="form-check-label" for="applyAllVhosts">Apply ke semua virtual host</label>
+                              </div>
+                            </div>
+                            <div class="form-group col-md-4 d-flex align-items-end">
+                              <button type="submit" class="btn btn-primary">Simpan Port</button>
+                            </div>
+                          </div>
+                        </form>
+                        <p class="small text-muted mb-0">{{.VHostPortSummary}}</p>
+                      </div>
+                    </div>
+
+                    <div class="tab-pane fade {{if eq .ActiveTab "vhost"}}show active{{end}}" id="vhost-pane" role="tabpanel">
+                      <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                          <p class="mb-1">Direktori virtual host: <code>{{.VHostPath}}</code></p>
+                          {{if .VHostEnabledPath}}
+                          <p class="mb-0 small text-muted">Direktori enabled: <code>{{.VHostEnabledPath}}</code></p>
+                          {{end}}
+                        </div>
+                        <button class="btn btn-primary btn-sm" type="button" data-toggle="collapse" data-target="#newVHostForm">
+                          <i class="fas fa-plus mr-1"></i>Add New
+                        </button>
+                      </div>
+
+                      <div class="collapse mb-4" id="newVHostForm">
+                        <div class="card card-body border-left-primary">
+                          <h6 class="text-primary font-weight-bold">New Virtual Host</h6>
+                          <form method="post" action="/service/vhost/create">
+                            <input type="hidden" name="service" value="{{.ServiceKey}}">
+                            <div class="form-row">
+                              <div class="form-group col-md-6">
+                                <label>Domain</label>
+                                <input type="text" name="domain" class="form-control" placeholder="example.com" required>
+                              </div>
+                              <div class="form-group col-md-6">
+                                <label>Alias (comma separated)</label>
+                                <input type="text" name="aliases" class="form-control" placeholder="www.example.com,api.example.com">
+                              </div>
+                            </div>
+                            <div class="form-row">
+                              <div class="form-group col-md-6">
+                                <label>Document Root</label>
+                                <input type="text" name="root_path" class="form-control" placeholder="/var/www/example" required>
+                              </div>
+                              <div class="form-group col-md-2">
+                                <label>Runtime</label>
+                                <select name="app_runtime" class="form-control" required>
+                                  <option value="">Pilih</option>
+                                  <option value="php">PHP</option>
+                                  <option value="java">Java</option>
+                                  <option value="python">Python</option>
+                                  <option value="dotnet">.NET</option>
+                                </select>
+                              </div>
+                              <div class="form-group col-md-2">
+                                <label>Port</label>
+                                <input type="number" name="listen_port" min="1" max="65535" value="{{.DefaultListenPort}}" class="form-control" required>
+                              </div>
+                              <div class="form-group col-md-2 d-flex align-items-end">
+                                <div class="form-check mb-2">
+                                  <input class="form-check-input" type="checkbox" name="enabled" id="vhostEnabled" checked>
+                                  <label class="form-check-label" for="vhostEnabled">Enable</label>
+                                </div>
+                              </div>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-sm">Save Virtual Host</button>
+                          </form>
+                        </div>
+                      </div>
+
+                      <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                          <thead class="thead-light">
+                            <tr>
+                              <th>#</th>
+                              <th>Domain</th>
+                              <th>Alias</th>
+                              <th>Root</th>
+                              <th>Runtime</th>
+                              <th>Port</th>
+                              <th>Config File</th>
+                              <th>Status</th>
+                              <th>Created</th>
+                              <th>Aksi</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {{if .VirtualHosts}}
+                              {{range .VirtualHosts}}
+                              <tr>
+                                <td>{{.ID}}</td>
+                                <td>{{.Domain}}</td>
+                                <td>{{.Aliases}}</td>
+                                <td><code>{{.RootPath}}</code></td>
+                                <td>
+                                  {{if .AppRuntime}}
+                                  <span class="badge badge-info">{{if eq .AppRuntime "dotnet"}}.NET{{else}}{{.AppRuntime}}{{end}}</span>
+                                  {{else}}
+                                  <span class="badge badge-secondary">not-set</span>
+                                  {{end}}
+                                </td>
+                                <td>{{.ListenPort}}</td>
+                                <td><code>{{.ConfigFile}}</code></td>
+                                <td>
+                                  {{if .Enabled}}
+                                  <span class="badge badge-success">Enabled</span>
+                                  {{else}}
+                                  <span class="badge badge-secondary">Disabled</span>
+                                  {{end}}
+                                  {{if .AppRuntime}}
+                                    {{if .RuntimeInstalled}}
+                                    <span class="badge badge-success">Runtime Installed</span>
+                                    {{else}}
+                                    <span class="badge badge-warning">Runtime Not Installed</span>
+                                    {{end}}
+                                  {{else}}
+                                  <span class="badge badge-secondary">Runtime Not Set</span>
+                                  {{end}}
+                                </td>
+                                <td>{{.CreatedAt}}</td>
+                                <td>
+                                  <button class="btn btn-warning btn-sm mb-1" type="button" data-toggle="collapse" data-target="#editVHost{{.ID}}">
+                                    Edit
+                                  </button>
+                                  {{if and .AppRuntime (not .RuntimeInstalled)}}
+                                  <form method="post" action="/service/runtime/install" class="d-inline-block">
+                                    <input type="hidden" name="service" value="{{$.ServiceKey}}">
+                                    <input type="hidden" name="runtime" value="{{.AppRuntime}}">
+                                    <button type="submit" class="btn btn-primary btn-sm mb-1">Install {{if eq .AppRuntime "dotnet"}}.NET{{else}}{{.AppRuntime}}{{end}}</button>
+                                  </form>
+                                  {{end}}
+                                  <form method="post" action="/service/vhost/delete" class="d-inline-block" onsubmit="return confirm('Padam virtual host ini?');">
+                                    <input type="hidden" name="service" value="{{$.ServiceKey}}">
+                                    <input type="hidden" name="id" value="{{.ID}}">
+                                    <button type="submit" class="btn btn-danger btn-sm mb-1">Padam</button>
+                                  </form>
+                                </td>
+                              </tr>
+                              <tr class="collapse bg-light" id="editVHost{{.ID}}">
+                                <td colspan="10">
+                                  <form method="post" action="/service/vhost/update">
+                                    <input type="hidden" name="service" value="{{$.ServiceKey}}">
+                                    <input type="hidden" name="id" value="{{.ID}}">
+                                    <div class="form-row">
+                                      <div class="form-group col-md-2">
+                                        <label>Domain</label>
+                                        <input type="text" name="domain" class="form-control form-control-sm" value="{{.Domain}}" required>
+                                      </div>
+                                      <div class="form-group col-md-2">
+                                        <label>Alias</label>
+                                        <input type="text" name="aliases" class="form-control form-control-sm" value="{{if ne .Aliases "-"}}{{.Aliases}}{{end}}">
+                                      </div>
+                                      <div class="form-group col-md-3">
+                                        <label>Document Root</label>
+                                        <input type="text" name="root_path" class="form-control form-control-sm" value="{{.RootPath}}" required>
+                                      </div>
+                                      <div class="form-group col-md-2">
+                                        <label>Runtime</label>
+                                        <select name="app_runtime" class="form-control form-control-sm" required>
+                                          <option value="" {{if eq .AppRuntime ""}}selected{{end}}>Pilih</option>
+                                          <option value="php" {{if eq .AppRuntime "php"}}selected{{end}}>PHP</option>
+                                          <option value="java" {{if eq .AppRuntime "java"}}selected{{end}}>Java</option>
+                                          <option value="python" {{if eq .AppRuntime "python"}}selected{{end}}>Python</option>
+                                          <option value="dotnet" {{if eq .AppRuntime "dotnet"}}selected{{end}}>.NET</option>
+                                        </select>
+                                      </div>
+                                      <div class="form-group col-md-1">
+                                        <label>Port</label>
+                                        <input type="number" name="listen_port" min="1" max="65535" class="form-control form-control-sm" value="{{.ListenPort}}" required>
+                                      </div>
+                                      <div class="form-group col-md-1 d-flex align-items-end">
+                                        <div class="form-check mb-2">
+                                          <input class="form-check-input" type="checkbox" name="enabled" id="editEnabled{{.ID}}" {{if .Enabled}}checked{{end}}>
+                                          <label class="form-check-label" for="editEnabled{{.ID}}">Enable</label>
+                                        </div>
+                                      </div>
+                                      <div class="form-group col-md-1 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-success btn-sm mb-2">Simpan</button>
+                                      </div>
+                                    </div>
+                                  </form>
+                                </td>
+                              </tr>
+                              {{end}}
+                            {{else}}
+                            <tr>
+                              <td colspan="10" class="text-center text-muted">Tiada virtual host direkodkan.</td>
+                            </tr>
+                            {{end}}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <p class="mb-2">Contoh konfigurasi asas:</p>
+                      <pre class="bg-light border rounded p-3 mb-0"><code>{{.VHostExample}}</code></pre>
+                    </div>
+
+                    <div class="tab-pane fade {{if eq .ActiveTab "optimize"}}show active{{end}}" id="optimize-pane" role="tabpanel">
+                      {{if .IsNginx}}
+                      <div class="alert alert-info mb-3" role="alert">
+                        Cadangan penting untuk Nginx configure panel.
+                      </div>
+                      {{end}}
+                      <ul class="mb-0">
+                        {{range .OptimizeSuggestions}}
+                        <li>{{.}}</li>
+                        {{end}}
+                      </ul>
+                    </div>
+
+                    {{if .ShowWAFTab}}
+                    <div class="tab-pane fade {{if eq .ActiveTab "waf"}}show active{{end}}" id="waf-pane" role="tabpanel">
+                      <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                          <h6 class="font-weight-bold text-dark mb-1">WAF ModSecurity + OWASP CRS</h6>
+                          <p class="mb-0 small text-muted">Config path: <code>{{.WAFConfigPath}}</code></p>
+                        </div>
+                        <form method="post" action="/service/waf/apply" class="mb-0">
+                          <input type="hidden" name="service" value="{{.ServiceKey}}">
+                          <input type="hidden" name="vhost_id" value="{{.WAFSelectedVHostID}}">
+                          <button type="submit" class="btn btn-outline-primary btn-sm">Apply WAF Config</button>
+                        </form>
+                      </div>
+
+                      <div class="mb-3">
+                        <span class="mr-3">
+                          <strong>ModSecurity:</strong>
+                          {{if .WAFModSecInstalled}}
+                          <span class="badge badge-success">Installed</span>
+                          {{else}}
+                          <span class="badge badge-danger">Not Installed</span>
+                          {{end}}
+                        </span>
+                        <span class="mr-3">
+                          <strong>OWASP CRS:</strong>
+                          {{if .WAFCRSInstalled}}
+                          <span class="badge badge-success">Installed</span>
+                          {{else}}
+                          <span class="badge badge-danger">Not Installed</span>
+                          {{end}}
+                        </span>
+                        {{if .WAFCanInstall}}
+                          {{if not .WAFModSecInstalled}}
+                          <form method="post" action="/service/waf/install/modsec" class="d-inline-block mr-2">
+                            <input type="hidden" name="service" value="{{.ServiceKey}}">
+                            <input type="hidden" name="vhost_id" value="{{.WAFSelectedVHostID}}">
+                            <button type="submit" class="btn btn-warning btn-sm">Install ModSecurity</button>
+                          </form>
+                          {{end}}
+                          {{if and .WAFModSecInstalled (not .WAFCRSInstalled)}}
+                          <form method="post" action="/service/waf/install/crs" class="d-inline-block">
+                            <input type="hidden" name="service" value="{{.ServiceKey}}">
+                            <input type="hidden" name="vhost_id" value="{{.WAFSelectedVHostID}}">
+                            <button type="submit" class="btn btn-info btn-sm">Install OWASP CRS</button>
+                          </form>
+                          {{end}}
+                        {{else}}
+                        <span class="text-danger small">Auto install tidak tersedia untuk distro ini.</span>
+                        {{end}}
+                      </div>
+
+                      {{if .WAFHasVHosts}}
+                      <form method="get" action="/{{.ServiceKey}}" class="form-inline mb-3">
+                        <input type="hidden" name="tab" value="waf">
+                        <label class="mr-2"><strong>Virtual Host</strong></label>
+                        <select class="form-control form-control-sm mr-2" name="vhost_id" onchange="this.form.submit()">
+                          {{range .VirtualHosts}}
+                          <option value="{{.ID}}" {{if eq .ID $.WAFSelectedVHostID}}selected{{end}}>{{.Domain}}</option>
+                          {{end}}
+                        </select>
+                        <noscript><button type="submit" class="btn btn-primary btn-sm">Load</button></noscript>
+                      </form>
+                      {{else}}
+                      <div class="alert alert-warning">Tiada virtual host. Tambah virtual host dahulu untuk rule-level control.</div>
+                      {{end}}
+
+                      {{if and .WAFHasVHosts .WAFModSecInstalled .WAFCRSInstalled}}
+                      <div class="table-responsive mb-4">
+                        <table class="table table-sm table-bordered">
+                          <thead class="thead-light">
+                            <tr>
+                              <th style="width: 40%;">Rule File</th>
+                              <th>Status ({{.WAFSelectedVHost}})</th>
+                              <th style="width: 160px;">Aksi</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {{if .WAFRules}}
+                              {{range .WAFRules}}
+                              <tr>
+                                <td>
+                                  <strong>{{.FileName}}</strong><br>
+                                  <small class="text-muted"><code>{{.FilePath}}</code></small>
+                                </td>
+                                <td>
+                                  {{if .Enabled}}
+                                  <span class="badge badge-success">Enabled</span>
+                                  {{else}}
+                                  <span class="badge badge-secondary">Disabled</span>
+                                  {{end}}
+                                </td>
+                                <td>
+                                  <form method="post" action="/service/waf/rule/toggle" class="mb-0">
+                                    <input type="hidden" name="service" value="{{$.ServiceKey}}">
+                                    <input type="hidden" name="vhost_id" value="{{$.WAFSelectedVHostID}}">
+                                    <input type="hidden" name="rule_file" value="{{.FilePath}}">
+                                    <input type="hidden" name="enabled" value="{{if .Enabled}}0{{else}}1{{end}}">
+                                    {{if .Enabled}}
+                                    <button type="submit" class="btn btn-danger btn-sm">Disable</button>
+                                    {{else}}
+                                    <button type="submit" class="btn btn-success btn-sm">Enable</button>
+                                    {{end}}
+                                  </form>
+                                </td>
+                              </tr>
+                              {{end}}
+                            {{else}}
+                            <tr>
+                              <td colspan="3" class="text-center text-muted">Tiada fail rule CRS ditemui.</td>
+                            </tr>
+                            {{end}}
+                          </tbody>
+                        </table>
+                      </div>
+                      {{end}}
+
+                      <ul class="nav nav-pills mb-3" id="corazaTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                          <a class="nav-link active" id="coraza-general-tab" data-toggle="pill" href="#coraza-general" role="tab">General</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                          <a class="nav-link" id="coraza-rules-tab" data-toggle="pill" href="#coraza-rules" role="tab">Rules</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                          <a class="nav-link" id="coraza-exclusions-tab" data-toggle="pill" href="#coraza-exclusions" role="tab">Exclusions</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                          <a class="nav-link" id="coraza-logging-tab" data-toggle="pill" href="#coraza-logging" role="tab">Logging</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                          <a class="nav-link" id="coraza-preview-tab" data-toggle="pill" href="#coraza-preview" role="tab">Preview</a>
+                        </li>
+                      </ul>
+
+                      <form method="post" action="/service/waf/save">
+                        <input type="hidden" name="service" value="{{.ServiceKey}}">
+                        <input type="hidden" name="vhost_id" value="{{.WAFSelectedVHostID}}">
+                        <div class="tab-content border rounded p-3">
+                          <div class="tab-pane fade show active" id="coraza-general" role="tabpanel">
+                            <div class="form-row">
+                              <div class="form-group col-md-3">
+                                <div class="form-check mt-4">
+                                  <input class="form-check-input" type="checkbox" id="wafEnabled" name="enabled" {{if .WAFConfig.Enabled}}checked{{end}}>
+                                  <label class="form-check-label" for="wafEnabled">Enable ModSecurity WAF</label>
+                                </div>
+                              </div>
+                              <div class="form-group col-md-3">
+                                <label>Mode</label>
+                                <select class="form-control" name="mode">
+                                  <option value="on" {{if eq .WAFConfig.Mode "on"}}selected{{end}}>On (Block)</option>
+                                  <option value="detection" {{if eq .WAFConfig.Mode "detection"}}selected{{end}}>Detection Only</option>
+                                  <option value="off" {{if eq .WAFConfig.Mode "off"}}selected{{end}}>Off</option>
+                                </select>
+                              </div>
+                              <div class="form-group col-md-2">
+                                <label>Paranoia Level</label>
+                                <input type="number" min="1" max="4" class="form-control" name="paranoia_level" value="{{.WAFConfig.ParanoiaLevel}}">
+                              </div>
+                              <div class="form-group col-md-2">
+                                <label>Inbound Score</label>
+                                <input type="number" min="1" max="20" class="form-control" name="inbound_anomaly_score" value="{{.WAFConfig.InboundAnomalyScore}}">
+                              </div>
+                              <div class="form-group col-md-2">
+                                <label>Outbound Score</label>
+                                <input type="number" min="1" max="20" class="form-control" name="outbound_anomaly_score" value="{{.WAFConfig.OutboundAnomalyScore}}">
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <label>Request Body Limit (KB)</label>
+                              <input type="number" min="128" class="form-control" name="request_body_limit_kb" value="{{.WAFConfig.RequestBodyLimitKB}}">
+                            </div>
+                          </div>
+
+                          <div class="tab-pane fade" id="coraza-rules" role="tabpanel">
+                            <div class="form-group">
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="crsEnabled" name="crs_enabled" {{if .WAFConfig.CRSEnabled}}checked{{end}}>
+                                <label class="form-check-label" for="crsEnabled">Enable OWASP Core Rule Set (CRS)</label>
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <label>Custom Rules Path</label>
+                              <input type="text" class="form-control" name="custom_rules_path" value="{{.WAFConfig.CustomRulesPath}}" placeholder="/etc/modsecurity/custom/*.conf">
+                            </div>
+                          </div>
+
+                          <div class="tab-pane fade" id="coraza-exclusions" role="tabpanel">
+                            <div class="form-group">
+                              <label>Trusted IPs / CIDR (satu baris satu nilai)</label>
+                              <textarea class="form-control" rows="4" name="trusted_ips" placeholder="127.0.0.1&#10;10.0.0.0/24">{{.WAFConfig.TrustedIPs}}</textarea>
+                            </div>
+                            <div class="form-group">
+                              <label>Excluded Paths (satu baris satu path)</label>
+                              <textarea class="form-control" rows="4" name="excluded_paths" placeholder="/healthz&#10;/metrics">{{.WAFConfig.ExcludedPaths}}</textarea>
+                            </div>
+                          </div>
+
+                          <div class="tab-pane fade" id="coraza-logging" role="tabpanel">
+                            <div class="form-group">
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="auditEnabled" name="audit_enabled" {{if .WAFConfig.AuditEnabled}}checked{{end}}>
+                                <label class="form-check-label" for="auditEnabled">Enable Audit Log</label>
+                              </div>
+                            </div>
+                            <div class="form-row">
+                              <div class="form-group col-md-8">
+                                <label>Audit Log Path</label>
+                                <input type="text" class="form-control" name="audit_log_path" value="{{.WAFConfig.AuditLogPath}}">
+                              </div>
+                              <div class="form-group col-md-4">
+                                <label>Log Level</label>
+                                <select class="form-control" name="log_level">
+                                  <option value="error" {{if eq .WAFConfig.LogLevel "error"}}selected{{end}}>error</option>
+                                  <option value="warn" {{if eq .WAFConfig.LogLevel "warn"}}selected{{end}}>warn</option>
+                                  <option value="info" {{if eq .WAFConfig.LogLevel "info"}}selected{{end}}>info</option>
+                                  <option value="debug" {{if eq .WAFConfig.LogLevel "debug"}}selected{{end}}>debug</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="tab-pane fade" id="coraza-preview" role="tabpanel">
+                            <p class="mb-2"><strong>Generated ModSecurity Config Preview:</strong></p>
+                            <pre class="bg-light border rounded p-3 mb-0"><code>{{.WAFConfigPreview}}</code></pre>
+                          </div>
+                        </div>
+                        <div class="mt-3">
+                          <button type="submit" class="btn btn-success">Save WAF Settings</button>
+                        </div>
+                      </form>
+                    </div>
+                    {{end}}
+                  </div>
+                  {{end}}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="sticky-footer bg-white">
+        <div class="container my-auto">
+          <div class="copyright text-center my-auto small">
+            <div>Copyright © 2026. Developed by Tunnelbiz Studio Sdn Bhd.</div>
+            <div>MIT License</div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/js/sb-admin-2.min.js"></script>
+</body>
+</html>

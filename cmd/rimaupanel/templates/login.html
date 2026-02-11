@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>RimauPanel - Login</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/css/sb-admin-2.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-primary">
+  <div class="container d-flex flex-column min-vh-100">
+    <div class="row justify-content-center flex-grow-1 align-items-center">
+      <div class="col-xl-5 col-lg-6 col-md-8">
+        <div class="card o-hidden border-0 shadow-lg my-5">
+          <div class="card-body p-0">
+            <div class="p-5">
+              <div class="text-center mb-4">
+                <h1 class="h4 text-gray-900">RimauPanel</h1>
+                <p class="mb-0">Sistem Login Pentadbiran</p>
+                <form method="get" action="/login" class="mt-2">
+                  <select name="lang" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <option value="ms" {{if eq .Lang "ms"}}selected{{end}}>Bahasa Malaysia</option>
+                    <option value="en" {{if eq .Lang "en"}}selected{{end}}>English</option>
+                  </select>
+                </form>
+              </div>
+              {{if .Error}}
+              <div class="alert {{if gt .LockoutSeconds 0}}alert-warning{{else}}alert-danger{{end}}" role="alert">{{.Error}}</div>
+              {{end}}
+
+              {{if gt .LockoutSeconds 0}}
+              <div class="text-center">
+                <p class="mb-1 text-gray-800">Akaun login dikunci sementara.</p>
+                <p class="mb-2 text-muted">Sila tunggu sehingga kiraan tamat.</p>
+                <p class="font-weight-bold">Cuba lagi dalam <span id="lockout-seconds">{{.LockoutSeconds}}</span> saat.</p>
+              </div>
+              {{else}}
+              <form class="user" method="post" action="/login">
+                <div class="form-group">
+                  <input type="text" class="form-control form-control-user" name="username" placeholder="Username" required>
+                </div>
+                <div class="form-group">
+                  <input type="password" class="form-control form-control-user" name="password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-user btn-block">Login</button>
+              </form>
+              {{end}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="pb-4 text-center text-white-50 small">
+      <div>Copyright © 2026. Developed by Tunnelbiz Studio Sdn Bhd.</div>
+      <div>MIT License</div>
+    </footer>
+  </div>
+
+  {{if gt .LockoutSeconds 0}}
+  <script>
+    (function () {
+      var remaining = {{.LockoutSeconds}};
+      var label = document.getElementById("lockout-seconds");
+      var tick = window.setInterval(function () {
+        remaining -= 1;
+        if (remaining <= 0) {
+          window.clearInterval(tick);
+          window.location.reload();
+          return;
+        }
+        if (label) {
+          label.textContent = remaining;
+        }
+      }, 1000);
+    })();
+  </script>
+  {{end}}
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/js/sb-admin-2.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>RimauPanel - Dashboard</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/css/sb-admin-2.min.css" rel="stylesheet">
+</head>
+<body id="page-top">
+  <div id="wrapper">
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/dashboard">
+        <div class="sidebar-brand-icon">
+          <img src="/assets/brand.svg" alt="RimauPanel" style="width: 40px; height: 40px;">
+        </div>
+        <div class="sidebar-brand-text mx-3">RimauPanel</div>
+      </a>
+      <hr class="sidebar-divider my-0">
+      <li class="nav-item active">
+        <a class="nav-link" href="/dashboard">
+          <i class="fas fa-fw fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/apache">
+          <i class="fas fa-fw fa-feather-alt"></i>
+          <span>Apache</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/nginx">
+          <i class="fas fa-fw fa-stream"></i>
+          <span>Nginx</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/kernel">
+          <i class="fas fa-fw fa-cogs"></i>
+          <span>Kernal</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/coraza">
+          <i class="fas fa-fw fa-shield-alt"></i>
+          <span>Coraza</span>
+        </a>
+      </li>
+      <hr class="sidebar-divider d-none d-md-block">
+    </ul>
+
+    <div id="content-wrapper" class="d-flex flex-column">
+      <div id="content">
+        <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+          <span class="mr-2 d-none d-lg-inline text-gray-600 small">Login sebagai {{.Username}}</span>
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+              <form method="post" action="/language" class="form-inline mr-2">
+                <input type="hidden" name="next" value="{{.CurrentURI}}">
+                <select name="lang" class="form-control form-control-sm" onchange="this.form.submit()">
+                  <option value="ms" {{if eq .Lang "ms"}}selected{{end}}>Bahasa Malaysia</option>
+                  <option value="en" {{if eq .Lang "en"}}selected{{end}}>English</option>
+                </select>
+              </form>
+            </li>
+            <li class="nav-item">
+              <a class="btn btn-sm btn-outline-primary mr-2" href="/change-password"><i class="fas fa-key mr-1"></i>Tukar Kata Laluan</a>
+            </li>
+            <li class="nav-item">
+              <a class="btn btn-sm btn-outline-danger" href="/logout"><i class="fas fa-sign-out-alt mr-1"></i>Logout</a>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="container-fluid">
+          <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Status Sistem</h1>
+          </div>
+
+          {{if .Error}}
+          <div class="alert alert-danger">{{.Error}}</div>
+          {{end}}
+
+          <div class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">CPU Usage</div>
+                      <div id="cpu-percent" class="h5 mb-0 font-weight-bold text-gray-800">{{formatPercent .Info.CPUPercent}}</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-microchip fa-2x text-gray-300"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Memory Usage</div>
+                      <div id="memory-usage" class="h5 mb-0 font-weight-bold text-gray-800">{{formatBytes .Info.MemUsed}} / {{formatBytes .Info.MemTotal}}</div>
+                      <div class="mt-2 progress progress-sm mr-2">
+                        <div id="memory-bar" class="progress-bar bg-success" role="progressbar" style="width: {{printf "%.2f" .Info.MemPercent}}%"></div>
+                      </div>
+                      <div id="memory-percent" class="text-xs text-muted mt-1">{{formatPercent .Info.MemPercent}}</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-memory fa-2x text-gray-300"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Maklumat OS</div>
+                      <div class="small text-gray-900"><strong id="os-name">{{.Info.OSName}}</strong></div>
+                      <div class="small">Kernel: <span id="kernel">{{.Info.Kernel}}</span></div>
+                      <div class="small">Hostname: <span id="hostname">{{.Info.Hostname}}</span></div>
+                      <div class="small">Uptime: <span id="uptime">{{.Info.Uptime}}</span></div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-desktop fa-2x text-gray-300"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Network</div>
+                      <div id="network-usage" class="small text-gray-800">RX: {{formatBytes .Info.NetRXBytes}} | TX: {{formatBytes .Info.NetTXBytes}}</div>
+                      <div id="network-rate" class="small text-muted mt-1">RX: 0 B/s | TX: 0 B/s</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-network-wired fa-2x text-gray-300"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-xl-6 col-lg-6 mb-4">
+              <div class="card shadow h-100">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">CPU</h6>
+                </div>
+                <div class="card-body">
+                  <div style="height: 280px;">
+                    <canvas id="cpuPieChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-6 col-lg-6 mb-4">
+              <div class="card shadow h-100">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-success">Memory</h6>
+                </div>
+                <div class="card-body">
+                  <div style="height: 280px;">
+                    <canvas id="memoryPieChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12 mb-4">
+              <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-info">Graph View Real-Time CPU dan Memory</h6>
+                  <span id="last-update" class="small text-muted">Belum ada data</span>
+                </div>
+                <div class="card-body">
+                  <div style="height: 320px;">
+                    <canvas id="usageLineChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12 mb-4">
+              <div class="card shadow">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-warning">Network Status</h6>
+                </div>
+                <div class="card-body">
+                  <div style="height: 320px;">
+                    <canvas id="networkLineChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <footer class="sticky-footer bg-white">
+        <div class="container my-auto">
+          <div class="copyright text-center my-auto small">
+            <div>Copyright © 2026. Developed by Tunnelbiz Studio Sdn Bhd.</div>
+            <div>MIT License</div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/js/sb-admin-2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script>
+    const MAX_POINTS = 30;
+    const initialCPU = {{printf "%.4f" .Info.CPUPercent}};
+    const initialMemUsed = {{.Info.MemUsed}};
+    const initialMemTotal = {{.Info.MemTotal}};
+    const initialMemPercent = {{printf "%.4f" .Info.MemPercent}};
+    const initialNetRXBytes = {{.Info.NetRXBytes}};
+    const initialNetTXBytes = {{.Info.NetTXBytes}};
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      let value = bytes;
+      let i = 0;
+      while (value >= 1024 && i < units.length - 1) {
+        value /= 1024;
+        i++;
+      }
+      return (i === 0 ? value.toFixed(0) : value.toFixed(2)) + ' ' + units[i];
+    }
+
+    function nowLabel() {
+      return new Date().toLocaleTimeString('ms-MY', { hour12: false });
+    }
+
+    function clampPercent(value) {
+      return Math.min(100, Math.max(0, Number(value || 0)));
+    }
+
+    function formatRate(bytesPerSecond) {
+      const bps = Math.max(0, Number(bytesPerSecond || 0));
+      if (bps < 1024) return bps.toFixed(0) + ' B/s';
+      if (bps < 1024 * 1024) return (bps / 1024).toFixed(2) + ' KB/s';
+      if (bps < 1024 * 1024 * 1024) return (bps / (1024 * 1024)).toFixed(2) + ' MB/s';
+      return (bps / (1024 * 1024 * 1024)).toFixed(2) + ' GB/s';
+    }
+
+    const cpuPieChart = new Chart(document.getElementById('cpuPieChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Digunakan', 'Idle'],
+        datasets: [{
+          data: [clampPercent(initialCPU), 100 - clampPercent(initialCPU)],
+          backgroundColor: ['#4e73df', '#eaecf4'],
+          hoverBackgroundColor: ['#2e59d9', '#d8dae5'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+
+    const memoryPieChart = new Chart(document.getElementById('memoryPieChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Digunakan', 'Tersedia'],
+        datasets: [{
+          data: [Math.max(0, Number(initialMemUsed)), Math.max(0, Number(initialMemTotal - initialMemUsed))],
+          backgroundColor: ['#1cc88a', '#eaecf4'],
+          hoverBackgroundColor: ['#17a673', '#d8dae5'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+
+    const usageLineChart = new Chart(document.getElementById('usageLineChart'), {
+      type: 'line',
+      data: {
+        labels: [nowLabel()],
+        datasets: [
+          {
+            label: 'CPU (%)',
+            data: [clampPercent(initialCPU)],
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78, 115, 223, 0.08)',
+            borderWidth: 2,
+            pointRadius: 1.5,
+            tension: 0.25,
+            fill: false
+          },
+          {
+            label: 'Memory (%)',
+            data: [clampPercent(initialMemPercent)],
+            borderColor: '#1cc88a',
+            backgroundColor: 'rgba(28, 200, 138, 0.08)',
+            borderWidth: 2,
+            pointRadius: 1.5,
+            tension: 0.25,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            min: 0,
+            max: 100,
+            ticks: {
+              callback: value => value + '%'
+            }
+          }
+        }
+      }
+    });
+
+    const networkLineChart = new Chart(document.getElementById('networkLineChart'), {
+      type: 'line',
+      data: {
+        labels: [nowLabel()],
+        datasets: [
+          {
+            label: 'RX (KB/s)',
+            data: [0],
+            borderColor: '#f6c23e',
+            backgroundColor: 'rgba(246, 194, 62, 0.10)',
+            borderWidth: 2,
+            pointRadius: 1.5,
+            tension: 0.25,
+            fill: false
+          },
+          {
+            label: 'TX (KB/s)',
+            data: [0],
+            borderColor: '#fd7e14',
+            backgroundColor: 'rgba(253, 126, 20, 0.10)',
+            borderWidth: 2,
+            pointRadius: 1.5,
+            tension: 0.25,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => value + ' KB/s'
+            }
+          }
+        }
+      }
+    });
+
+    let lastNetSampleAt = Date.now();
+    let lastNetRXBytes = Number(initialNetRXBytes || 0);
+    let lastNetTXBytes = Number(initialNetTXBytes || 0);
+
+    function pushRealtimePoint(cpuPercent, memPercent) {
+      usageLineChart.data.labels.push(nowLabel());
+      usageLineChart.data.datasets[0].data.push(clampPercent(cpuPercent));
+      usageLineChart.data.datasets[1].data.push(clampPercent(memPercent));
+
+      if (usageLineChart.data.labels.length > MAX_POINTS) {
+        usageLineChart.data.labels.shift();
+        usageLineChart.data.datasets[0].data.shift();
+        usageLineChart.data.datasets[1].data.shift();
+      }
+      usageLineChart.update('none');
+    }
+
+    function pushNetworkPoint(rxKBps, txKBps) {
+      networkLineChart.data.labels.push(nowLabel());
+      networkLineChart.data.datasets[0].data.push(Math.max(0, Number(rxKBps || 0)));
+      networkLineChart.data.datasets[1].data.push(Math.max(0, Number(txKBps || 0)));
+
+      if (networkLineChart.data.labels.length > MAX_POINTS) {
+        networkLineChart.data.labels.shift();
+        networkLineChart.data.datasets[0].data.shift();
+        networkLineChart.data.datasets[1].data.shift();
+      }
+      networkLineChart.update('none');
+    }
+
+    function updatePieCharts(cpuPercent, memUsed, memTotal) {
+      const cpu = clampPercent(cpuPercent);
+      cpuPieChart.data.datasets[0].data = [cpu, 100 - cpu];
+      cpuPieChart.update();
+
+      const used = Math.max(0, Number(memUsed || 0));
+      const total = Math.max(0, Number(memTotal || 0));
+      const free = Math.max(0, total - used);
+      memoryPieChart.data.datasets[0].data = [used, free];
+      memoryPieChart.update();
+    }
+
+    function refreshSystemStatus() {
+      fetch('/api/system', { credentials: 'same-origin' })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('gagal baca sistem');
+          }
+          return response.json();
+        })
+        .then(data => {
+          const cpuPercent = clampPercent(data.cpu_percent || 0);
+          const memUsed = Number(data.mem_used || 0);
+          const memTotal = Number(data.mem_total || 0);
+          const memPercent = clampPercent(data.mem_percent || 0);
+          const netRXBytes = Number(data.net_rx_bytes || 0);
+          const netTXBytes = Number(data.net_tx_bytes || 0);
+
+          document.getElementById('cpu-percent').textContent = cpuPercent.toFixed(2) + '%';
+          document.getElementById('memory-usage').textContent = formatBytes(data.mem_used || 0) + ' / ' + formatBytes(data.mem_total || 0);
+          document.getElementById('memory-percent').textContent = memPercent.toFixed(2) + '%';
+          document.getElementById('memory-bar').style.width = memPercent + '%';
+          document.getElementById('network-usage').textContent = 'RX: ' + formatBytes(netRXBytes) + ' | TX: ' + formatBytes(netTXBytes);
+          document.getElementById('os-name').textContent = data.os_name || 'N/A';
+          document.getElementById('kernel').textContent = data.kernel || 'N/A';
+          document.getElementById('hostname').textContent = data.hostname || 'N/A';
+          document.getElementById('uptime').textContent = data.uptime || 'N/A';
+          document.getElementById('last-update').textContent = 'Kemaskini: ' + nowLabel();
+
+          const now = Date.now();
+          const deltaSec = Math.max((now - lastNetSampleAt) / 1000, 0.001);
+          const rxRate = Math.max(0, (netRXBytes - lastNetRXBytes) / deltaSec);
+          const txRate = Math.max(0, (netTXBytes - lastNetTXBytes) / deltaSec);
+          document.getElementById('network-rate').textContent = 'RX: ' + formatRate(rxRate) + ' | TX: ' + formatRate(txRate);
+
+          updatePieCharts(cpuPercent, memUsed, memTotal);
+          pushRealtimePoint(cpuPercent, memPercent);
+          pushNetworkPoint(rxRate / 1024, txRate / 1024);
+
+          lastNetSampleAt = now;
+          lastNetRXBytes = netRXBytes;
+          lastNetTXBytes = netTXBytes;
+        })
+        .catch(() => {
+          // Abaikan ralat sementara; status akan dicuba semula.
+        });
+    }
+
+    refreshSystemStatus();
+    setInterval(refreshSystemStatus, 2000);
+  </script>
+</body>
+</html>
