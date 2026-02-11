@@ -1,0 +1,8 @@
+/bin/
+/data/
+*.db
+*.log
+.gocache/
+.gopath/
+rimaupanel
+*.out
