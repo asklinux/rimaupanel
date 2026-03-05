@@ -16,10 +16,10 @@ Sistem web asas menggunakan Go dengan login berasaskan SQLite dan dashboard SB A
 ## Install Dengan Repos
 Debian/ubuntu
 
-wget https://tunnelbiz.com/repo/rimaupanel/rimaupanel-repo_1.0.0_all.deb
+wget https://tunnelbiz.com/repo/rimaupanel/rimaupanel-repo_1.0.1_all.deb
 
-chmod +x rimaupanel-repo_1.0.0_all.deb
-dpkg -i rimaupanel-repo_1.0.0_all.deb
+chmod +x rimaupanel-repo_1.0.1_all.deb
+dpkg -i rimaupanel-repo_1.0.1_all.deb
 apt install rimaupanel
 
 
