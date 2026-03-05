@@ -19,12 +19,16 @@ Debian/ubuntu
 wget https://tunnelbiz.com/repo/rimaupanel/rimaupanel-repo_1.0.0_all.deb
 
 chmod +x rimaupanel-repo_1.0.0_all.deb
+dpkg -i rimaupanel-repo_1.0.0_all.deb
+apt install rimaupanel
 
-apt install rimaupanel-repo_1.0.0_all.deb
 
 RHEL/ROCKY
 
-dnf install https://tunnelbiz.com/repo/rocky/rimaupanel-repo-1.0-1.el8.noarch.rpm
+wget https://tunnelbiz.com/repo/rocky/rimaupanel-repo-1.0-1.noarch.rpm
+rpm -ivh rimaupanel-repo-1.0-1.noarch.rpm
+dnf install rimaupanel
+
 
 ## Jalankan Local
 ```bash
