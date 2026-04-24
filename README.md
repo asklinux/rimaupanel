@@ -25,9 +25,14 @@ apt install rimaupanel
 
 RHEL/ROCKY
 
-wget https://tunnelbiz.com/repo/rocky/rimaupanel-repo-1.0-1.noarch.rpm
-rpm -ivh rimaupanel-repo-1.0-1.noarch.rpm
-dnf install rimaupanel
+dnf install https://github.com/asklinux/rimaupanel/releases/download/v2.1.3/rimaupanel-2.1.3-ent.el8.el8.x86_64.rpm
+
+systemctl status rimaupanel
+
+open firewall port 8000
+
+firewall-cmd --permanent --add-port=8000/tcp
+irewall-cmd --reload
 
 
 ## Jalankan Local
